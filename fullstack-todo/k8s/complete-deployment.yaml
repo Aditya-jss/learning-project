@@ -1,0 +1,128 @@
+# Combined Kubernetes manifests for Todo App
+# This file contains all resources needed to deploy the fullstack todo app
+
+# Namespace (optional but recommended)
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: todo-app
+---
+# Backend Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-deployment
+  namespace: todo-app
+  labels:
+    app: todo-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: todo-backend
+  template:
+    metadata:
+      labels:
+        app: todo-backend
+    spec:
+      containers:
+      - name: backend
+        image: aditya747599/todo-backend:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: DATABASE_URL
+          value: "sqlite:///./todos.db"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+---
+# Backend Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+  namespace: todo-app
+spec:
+  selector:
+    app: todo-backend
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000
+  type: ClusterIP
+---
+# Frontend Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-deployment
+  namespace: todo-app
+  labels:
+    app: todo-frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: todo-frontend
+  template:
+    metadata:
+      labels:
+        app: todo-frontend
+    spec:
+      containers:
+      - name: frontend
+        image: aditya747599/todo-frontend:latest
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+---
+# Frontend Service (LoadBalancer for external access)
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+  namespace: todo-app
+spec:
+  selector:
+    app: todo-frontend
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+      nodePort: 30080
+  type: NodePort

@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Design Learning - DNS, CDN, Transport, Security</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #f0f0f0;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 0;
+        }
+
+        .tab-button {
+            padding: 15px 25px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 1em;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .tab-button:hover {
+            color: #667eea;
+            background: #f9f9f9;
+        }
+
+        .tab-button.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .section h3 {
+            color: #764ba2;
+            margin: 15px 0 10px 0;
+            font-size: 1.1em;
+        }
+
+        .code-block {
+            background: #f5f5f5;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+
+        .success-box {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+
+        .warning-box {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: #4caf50;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #45a049;
+        }
+
+        .btn-warning {
+            background: #ff9800;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #e68900;
+        }
+
+        .response-box {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .response-box pre {
+            margin: 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .user-card {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .user-info {
+            flex: 1;
+        }
+
+        .user-info h4 {
+            margin-bottom: 5px;
+            color: #667eea;
+        }
+
+        .user-info p {
+            color: #666;
+            font-size: 0.9em;
+            margin: 3px 0;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        textarea {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: inherit;
+            font-size: 0.95em;
+        }
+
+        input[type="text"],
+        input[type="email"] {
+            min-width: 200px;
+            flex: 1;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .steps {
+            counter-reset: step-counter;
+            list-style: none;
+        }
+
+        .steps li {
+            counter-increment: step-counter;
+            margin: 15px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-left: 4px solid #667eea;
+            border-radius: 5px;
+        }
+
+        .steps li::before {
+            content: "Step " counter(step-counter);
+            font-weight: bold;
+            color: #667eea;
+            margin-right: 10px;
+        }
+
+        .protocol-indicator {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+            margin: 10px 0;
+        }
+
+        .protocol-http {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .protocol-https {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .footer {
+            background: #f5f5f5;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            border-top: 1px solid #ddd;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+
+            .tab-button {
+                border-bottom: none;
+                border-left: 3px solid transparent;
+                text-align: left;
+            }
+
+            .tab-button.active {
+                border-left-color: #667eea;
+            }
+
+            .user-card {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 System Design Learning Lab</h1>
+            <p>Understanding DNS, CDN, Transport, Security & TLS/SSL</p>
+        </div>
+
+        <div class="content">
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab-button active" data-tab="step1">Step 1: HTTP</button>
+                <button class="tab-button" data-tab="step2">Step 2: Requests</button>
+                <button class="tab-button" data-tab="step3">Step 3: Users API</button>
+                <button class="tab-button" data-tab="step4">Step 4: HTTPS/TLS</button>
+                <button class="tab-button" data-tab="step5">Step 5: DNS</button>
+                <button class="tab-button" data-tab="step6">Step 6: CDN</button>
+                <button class="tab-button" data-tab="step7">Step 7: Postman</button>
+            </div>
+
+            <!-- STEP 1: HTTP -->
+            <div id="step1" class="tab-content active">
+                <div class="section">
+                    <h2>Step 1: Understanding HTTP Protocol</h2>
+                    <p>HTTP is the foundation of web communication. Every request from your browser to a server uses HTTP (or HTTPS).</p>
+
+                    <h3>What happens:</h3>
+                    <div class="info-box">
+                        <strong>1.</strong> Your browser sends a request → <strong>2.</strong> Server processes it → <strong>3.</strong> Server sends response → <strong>4.</strong> Browser displays result
+                    </div>
+
+                    <h3>Test the Server:</h3>
+                    <div class="button-group">
+                        <button class="btn btn-primary" onclick="testHttpHealth()">Test Health Check (GET)</button>
+                        <button class="btn btn-primary" onclick="testProtocolInfo()">Check Protocol</button>
+                    </div>
+
+                    <div id="httpResponse" class="response-box" style="display:none;">
+                        <pre></pre>
+                    </div>
+
+                    <h3>How it works:</h3>
+                    <div class="code-block">GET /api/health HTTP/1.1
+Host: localhost:5000
+User-Agent: Browser
+Accept: application/json
+
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 156
+
+{
+    "status": "healthy",
+    "protocol": "HTTP"
+}</div>
+
+                    <div class="warning-box">
+                        <strong>⚠️ Note:</strong> HTTP sends data in plain text. Anyone on the network can see it. That's why HTTPS (with encryption) is important!
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 2: Requests -->
+            <div id="step2" class="tab-content">
+                <div class="section">
+                    <h2>Step 2: Request Methods (GET, POST, PUT, DELETE)</h2>
+                    <p>Different HTTP methods do different things:</p>
+
+                    <div class="info-box">
+                        <strong>GET:</strong> Retrieve data (no body)<br>
+                        <strong>POST:</strong> Create new data<br>
+                        <strong>PUT:</strong> Update existing data<br>
+                        <strong>DELETE:</strong> Remove data
+                    </div>
+
+                    <h3>Request Headers & Responses:</h3>
+                    <div class="button-group">
+                        <button class="btn btn-primary" onclick="viewRequestHeaders()">View Your Request Headers</button>
+                    </div>
+
+                    <div id="headersResponse" class="response-box" style="display:none;">
+                        <pre></pre>
+                    </div>
+
+                    <h3>Understanding Response Headers:</h3>
+                    <div class="code-block">
+Content-Type: application/json        → What format is the response
+Content-Length: 1234                  → Size of response
+Cache-Control: max-age=3600           → How long to cache (CDN!)
+ETag: "abc123"                        → Version of content
+Set-Cookie: session=xyz               → Store data in browser
+X-Custom-Header: value                → Custom headers
+                    </div>
+
+                    <div class="success-box">
+                        <strong>💡 Tip:</strong> Headers tell the browser (or CDN) important information about the response!
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 3: Users API -->
+            <div id="step3" class="tab-content">
+                <div class="section">
+                    <h2>Step 3: Users API - Full CRUD Operations</h2>
+                    <p>CRUD = Create, Read, Update, Delete. Let's practice with a Users database.</p>
+
+                    <h3>Get All Users:</h3>
+                    <div class="button-group">
+                        <button class="btn btn-primary" onclick="fetchUsers()">Fetch All Users (GET)</button>
+                    </div>
+
+                    <div id="usersListResponse" class="response-box" style="display:none;">
+                        <pre></pre>
+                    </div>
+
+                    <h3>Create New User:</h3>
+                    <div class="input-group">
+                        <input type="text" id="newUserName" placeholder="Name (e.g., Alice)">
+                        <input type="email" id="newUserEmail" placeholder="Email (e.g., alice@example.com)">
+                        <button class="btn btn-success" onclick="createUser()">Create User (POST)</button>
+                    </div>
+
+                    <div id="createUserResponse" class="response-box" style="display:none;">
+                        <pre></pre>
+                    </div>
+
+                    <h3>Users on Server:</h3>
+                    <div id="usersList"></div>
+
+                    <h3>Update User:</h3>
+                    <div class="input-group">
+                        <input type="text" id="updateUserId" placeholder="User ID">
+                        <input type="text" id="updateUserName" placeholder="New Name">
+                        <input type="email" id="updateUserEmail" placeholder="New Email">
+                        <button class="btn btn-warning" onclick="updateUser()">Update (PUT)</button>
+                    </div>
+
+                    <div id="updateResponse" class="response-box" style="display:none;">
+                        <pre></pre>
+                    </div>
+
+                    <h3>Delete User:</h3>
+                    <div class="input-group">
+                        <input type="text" id="deleteUserId" placeholder="User ID to delete">
+                        <button class="btn btn-warning" onclick="deleteUser()" style="background: #d32f2f;">Delete (DELETE)</button>
+                    </div>
+
+                    <div id="deleteResponse" class="response-box" style="display:none;">
+                        <pre></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 4: HTTPS/TLS -->
+            <div id="step4" class="tab-content">
+                <div class="section">
+                    <h2>Step 4: HTTPS & TLS/SSL Security</h2>
+                    <p>HTTPS encrypts your data so only the server can read it. TLS/SSL is the encryption protocol.</p>
+
+                    <h3>Difference between HTTP and HTTPS:</h3>
+                    <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
+                        <tr style="background: #f0f0f0;">
+                            <th style="padding: 10px; border: 1px solid #ddd; text-align: left;">HTTP</th>
+                            <th style="padding: 10px; border: 1px solid #ddd; text-align: left;">HTTPS</th>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #ddd;">⚠️ Plain text</td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">🔒 Encrypted</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #ddd;">Anyone can see data</td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">Only server can see</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #ddd;">Port 80</td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">Port 443</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #ddd;">No certificate</td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">Requires certificate</td>
+                        </tr>
+                    </table>
+
+                    <h3>How HTTPS Works:</h3>
+                    <ol class="steps">
+                        <li>Browser requests secure connection (port 443)</li>
+                        <li>Server sends its SSL/TLS certificate</li>
+                        <li>Browser verifies the certificate</li>
+                        <li>Both agree on encryption method</li>
+                        <li>All data is now encrypted</li>
+                    </ol>
+
+                    <h3>Test HTTPS Endpoint (requires app-https.py running on port 5443):</h3>
+                    <div class="button-group">
+                        <button class="btn btn-primary" onclick="testHttpsHealth()">Test HTTPS Health</button>
+                        <button class="btn btn-primary" onclick="getCertificateInfo()">View Certificate Info</button>
+                    </div>
+
+                    <div id="httpsResponse" class="response-box" style="display:none;">
+                        <pre></pre>
+                    </div>
+
+                    <h3>Self-Signed Certificate (for learning):</h3>
+                    <div class="code-block">
+# Already created in certificates/ folder
+certificates/server.crt    → Public certificate
+certificates/server.key    → Private key
+
+In production: Use certificates from Let's Encrypt or other CA
+                    </div>
+
+                    <div class="success-box">
+                        <strong>🔒 Security Advantage:</strong> Even if someone intercepts your request, they can't read it because it's encrypted!
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 5: DNS -->
+            <div id="step5" class="tab-content">
+                <div class="section">
+                    <h2>Step 5: DNS (Domain Name System)</h2>
+                    <p>DNS translates human-readable domain names (like google.com) into IP addresses (like 142.250.80.46).</p>
+
+                    <h3>DNS Resolution Flow:</h3>
+                    <div class="info-box">
+                        <strong>1. You type:</strong> myapp.local<br>
+                        <strong>2. Browser checks:</strong> /etc/hosts file (local DNS)<br>
+                        <strong>3. Maps to:</strong> 127.0.0.1 (your computer)<br>
+                        <strong>4. Connects to:</strong> localhost:5000
+                    </div>
+
+                    <h3>Setup Local DNS on macOS:</h3>
+                    <div class="code-block">
+# Edit /etc/hosts file:
+sudo nano /etc/hosts
+
+# Add this line:
+127.0.0.1  myapp.local
+
+# Save (Ctrl+O, Enter, Ctrl+X)
+
+# Test in terminal:
+ping myapp.local
+nslookup myapp.local
+
+# Then visit in browser:
+http://myapp.local:5000/api/health
+                    </div>
+
+                    <h3>DNS in System Design:</h3>
+                    <div class="info-box">
+                        ✅ <strong>Fast lookup:</strong> Caches IP addresses<br>
+                        ✅ <strong>Load balancing:</strong> One domain → Multiple IPs<br>
+                        ✅ <strong>Failover:</strong> Switch to backup server if primary fails<br>
+                        ✅ <strong>Routing:</strong> Direct traffic geographically
+                    </div>
+
+                    <div class="warning-box">
+                        <strong>⚠️ Note:</strong> You'll need to edit /etc/hosts manually on your computer to test local DNS. This is for learning only!
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 6: CDN -->
+            <div id="step6" class="tab-content">
+                <div class="section">
+                    <h2>Step 6: CDN (Content Delivery Network)</h2>
+                    <p>CDN stores copies of your content in multiple locations worldwide so users get faster access.</p>
+
+                    <h3>CDN Benefits:</h3>
+                    <div class="info-box">
+                        ⚡ <strong>Faster:</strong> Content served from nearest location<br>
+                        🌍 <strong>Global:</strong> Available everywhere<br>
+                        🛡️ <strong>Secure:</strong> DDoS protection<br>
+                        💰 <strong>Cheaper:</strong> Less bandwidth on your server
+                    </div>
+
+                    <h3>Test Cache Headers:</h3>
+                    <div class="button-group">
+                        <button class="btn btn-primary" onclick="testCacheableContent()">View Cacheable Content</button>
+                        <button class="btn btn-primary" onclick="testNoCacheContent()">View Non-Cacheable Content</button>
+                    </div>
+
+                    <div id="cacheResponse" class="response-box" style="display:none;">
+                        <pre></pre>
+                    </div>
+
+                    <h3>How CDN Uses Cache Headers:</h3>
+                    <div class="code-block">
+Cache-Control: public, max-age=3600
+  ↓
+CDN stores for 1 hour (3600 seconds)
+Users in USA get from USA server
+Users in India get from India server
+All much faster!
+
+Cache-Control: no-cache, no-store
+  ↓
+Never cache, always fetch fresh
+Used for user data, real-time info
+                    </div>
+
+                    <h3>Popular CDNs:</h3>
+                    <ul style="margin-left: 20px; color: #666;">
+                        <li><strong>Cloudflare:</strong> Fastest growing CDN</li>
+                        <li><strong>AWS CloudFront:</strong> Amazon's CDN</li>
+                        <li><strong>Akamai:</strong> Enterprise CDN</li>
+                        <li><strong>Fastly:</strong> Real-time CDN</li>
+                    </ul>
+
+                    <div class="success-box">
+                        <strong>💡 Optimization:</strong> Static files (JS, CSS, images) benefit most from CDN. Dynamic content needs special handling.
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 7: Postman -->
+            <div id="step7" class="tab-content">
+                <div class="section">
+                    <h2>Step 7: Testing with Postman</h2>
+                    <p>Postman is a tool to test APIs without writing code. Perfect for debugging and learning!</p>
+
+                    <h3>Getting Started with Postman:</h3>
+                    <ol class="steps">
+                        <li><strong>Download:</strong> Go to postman.com and download Postman app</li>
+                        <li><strong>Create Account:</strong> Free tier is enough</li>
+                        <li><strong>Import Collection:</strong> Go to File → Import → Select postman-collection.json from project folder</li>
+                        <li><strong>Start Testing:</strong> Click any request and press Send</li>
+                    </ol>
+
+                    <h3>Collection Structure:</h3>
+                    <div class="code-block">
+System Design Learning
+├── Step 1: HTTP
+│   ├── Health Check (GET)
+│   └── Protocol Info (GET)
+├── Step 2: Request Headers
+│   └── View Your Headers (GET)
+├── Step 3: Users API
+│   ├── Get All Users (GET)
+│   ├── Get Single User (GET)
+│   ├── Create User (POST)
+│   ├── Update User (PUT)
+│   └── Delete User (DELETE)
+├── Step 4: Security
+│   ├── API Key Test (POST)
+│   ├── Cache Demo (GET)
+│   └── No Cache (GET)
+└── Step 5: HTTPS Tests
+    └── Secure Health Check (GET)
+                    </div>
+
+                    <h3>Important Postman Settings:</h3>
+                    <div class="warning-box">
+                        <strong>For HTTPS Testing:</strong> Go to Postman Settings → General → Disable "SSL certificate verification" (for self-signed certs only!)
+                    </div>
+
+                    <h3>Test Steps in Postman:</h3>
+                    <ol class="steps">
+                        <li>Start backend: <code>python app.py</code> (port 5000)</li>
+                        <li>Open Postman</li>
+                        <li>Try GET requests first (easiest)</li>
+                        <li>Look at Response → Headers to see Cache-Control, ETag, etc.</li>
+                        <li>Try POST/PUT/DELETE with Body (JSON)</li>
+                        <li>Switch to HTTPS: <code>python app-https.py</code> (port 5443)</li>
+                        <li>Notice how requests are encrypted</li>
+                    </ol>
+
+                    <h3>Key Things to Check in Response:</h3>
+                    <div class="info-box">
+                        📊 <strong>Status Code:</strong> 200=OK, 201=Created, 400=Bad request, 401=Unauthorized, 404=Not found, 500=Error<br>
+                        📋 <strong>Headers:</strong> See caching, security, content type<br>
+                        📦 <strong>Body:</strong> The actual data returned<br>
+                        ⏱️ <strong>Time:</strong> How long the request took
+                    </div>
+
+                    <h3>Quick Download:</h3>
+                    <div class="button-group">
+                        <button class="btn btn-primary" onclick="downloadPostmanCollection()">📥 Download Postman Collection (JSON)</button>
+                    </div>
+
+                    <div class="success-box">
+                        <strong>✅ Pro Tip:</strong> Use Postman's tests feature to automate checks. Great for learning and production APIs!
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>🚀 System Design Learning Lab | Learn DNS, CDN, Transport, Security, TLS/SSL step by step</p>
+            <p>Backend: <span class="protocol-http">HTTP: localhost:5000</span> <span class="protocol-https">HTTPS: localhost:5443</span></p>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000';
+        const API_HTTPS = 'https://localhost:5443';
+
+        // Tab switching
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', () => {
+                const tabName = button.getAttribute('data-tab');
+                
+                // Hide all tabs
+                document.querySelectorAll('.tab-content').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                document.querySelectorAll('.tab-button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+
+                // Show selected tab
+                document.getElementById(tabName).classList.add('active');
+                button.classList.add('active');
+            });
+        });
+
+        // Helper function to show response
+        function showResponse(elementId, data, status = 'success') {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.querySelector('pre').textContent = JSON.stringify(data, null, 2);
+        }
+
+        // Helper function to make API calls
+        async function apiCall(method, endpoint, body = null, isHttps = false) {
+            try {
+                const url = (isHttps ? API_HTTPS : API_BASE) + endpoint;
+                const options = {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                };
+
+                if (body) {
+                    options.body = JSON.stringify(body);
+                }
+
+                // For HTTPS, we need to handle cert warnings
+                if (isHttps) {
+                    options.mode = 'cors';
+                }
+
+                const response = await fetch(url, options);
+                const data = await response.json();
+                
+                return { status: response.status, data };
+            } catch (error) {
+                return { status: 'error', data: { error: error.message } };
+            }
+        }
+
+        // STEP 1 Functions
+        async function testHttpHealth() {
+            const response = await apiCall('GET', '/api/health');
+            showResponse('httpResponse', response.data);
+        }
+
+        async function testProtocolInfo() {
+            const response = await apiCall('GET', '/api/protocol-info');
+            showResponse('httpResponse', response.data);
+        }
+
+        // STEP 2 Functions
+        async function viewRequestHeaders() {
+            const response = await apiCall('GET', '/api/request-headers');
+            showResponse('headersResponse', response.data);
+        }
+
+        // STEP 3 Functions
+        async function fetchUsers() {
+            const response = await apiCall('GET', '/api/users');
+            showResponse('usersListResponse', response.data);
+            displayUsers(response.data.data || []);
+        }
+
+        function displayUsers(users) {
+            const usersList = document.getElementById('usersList');
+            if (users.length === 0) {
+                usersList.innerHTML = '<div class="user-card"><p>No users yet</p></div>';
+                return;
+            }
+
+            usersList.innerHTML = users.map(user => `
+                <div class="user-card">
+                    <div class="user-info">
+                        <h4>${user.name}</h4>
+                        <p><strong>ID:</strong> ${user.id}</p>
+                        <p><strong>Email:</strong> ${user.email}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function createUser() {
+            const name = document.getElementById('newUserName').value;
+            const email = document.getElementById('newUserEmail').value;
+
+            if (!name || !email) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            const response = await apiCall('POST', '/api/users', { name, email });
+            showResponse('createUserResponse', response.data);
+            
+            // Refresh users list
+            setTimeout(fetchUsers, 500);
+            
+            // Clear inputs
+            document.getElementById('newUserName').value = '';
+            document.getElementById('newUserEmail').value = '';
+        }
+
+        async function updateUser() {
+            const id = parseInt(document.getElementById('updateUserId').value);
+            const name = document.getElementById('updateUserName').value;
+            const email = document.getElementById('updateUserEmail').value;
+
+            if (!id || !name || !email) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            const response = await apiCall('PUT', `/api/users/${id}`, { name, email });
+            showResponse('updateResponse', response.data);
+            
+            setTimeout(fetchUsers, 500);
+        }
+
+        async function deleteUser() {
+            const id = parseInt(document.getElementById('deleteUserId').value);
+            
+            if (!id) {
+                alert('Please enter a user ID');
+                return;
+            }
+
+            if (!confirm(`Delete user ${id}?`)) {
+                return;
+            }
+
+            const response = await apiCall('DELETE', `/api/users/${id}`);
+            showResponse('deleteResponse', response.data);
+            
+            setTimeout(fetchUsers, 500);
+            document.getElementById('deleteUserId').value = '';
+        }
+
+        // STEP 4 Functions
+        async function testHttpsHealth() {
+            const response = await apiCall('GET', '/api/health', null, true);
+            showResponse('httpsResponse', response.data);
+        }
+
+        async function getCertificateInfo() {
+            const response = await apiCall('GET', '/api/certificate-info', null, true);
+            showResponse('httpsResponse', response.data);
+        }
+
+        // STEP 6 Functions
+        async function testCacheableContent() {
+            const response = await apiCall('GET', '/api/cache-demo');
+            showResponse('cacheResponse', response.data);
+        }
+
+        async function testNoCacheContent() {
+            const response = await apiCall('GET', '/api/no-cache');
+            showResponse('cacheResponse', response.data);
+        }
+
+        // STEP 7 Functions
+        function downloadPostmanCollection() {
+            alert('Postman collection file is in: postman/collection.json\n\nTo import:\n1. Open Postman\n2. Click Import\n3. Select postman/collection.json');
+        }
+
+        // Load users on page load
+        window.addEventListener('load', () => {
+            console.log('Page loaded. Backend should be running on port 5000');
+        });
+    </script>
+</body>
+</html>

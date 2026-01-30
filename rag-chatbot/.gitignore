@@ -1,0 +1,37 @@
+# Environment
+.env
+venv/
+env/
+*.pyc
+__pycache__/
+.pytest_cache/
+
+# Data
+data/vectorstore/*
+!data/vectorstore/.gitkeep
+*.db
+*.sqlite
+
+# Models
+models/
+*.pkl
+*.joblib
+
+# Evaluation Results
+evaluation/results/*
+!evaluation/results/.gitkeep
+evaluation/*.jsonl
+
+# Logs
+*.log
+logs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

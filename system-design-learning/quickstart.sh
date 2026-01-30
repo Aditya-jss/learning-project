@@ -1,0 +1,92 @@
+#!/bin/bash
+
+# Quick Start Script for System Design Learning Lab
+# Run: bash quickstart.sh
+
+echo ""
+echo "=========================================="
+echo "🚀 System Design Learning Lab"
+echo "DNS, CDN, Transport, Security, TLS/SSL"
+echo "=========================================="
+echo ""
+
+# Check Python
+if ! command -v python3 &> /dev/null; then
+    echo "❌ Python3 not found. Please install Python 3.7+"
+    exit 1
+fi
+
+echo "✅ Python3 found"
+echo ""
+
+# Install dependencies
+echo "📦 Installing dependencies..."
+cd backend
+pip install -r requirements.txt
+cd ..
+
+echo ""
+echo "=========================================="
+echo "✅ Setup Complete!"
+echo "=========================================="
+echo ""
+echo "📌 Next Steps:"
+echo ""
+echo "1️⃣  START BACKEND (HTTP):"
+echo "   cd backend"
+echo "   python app.py"
+echo ""
+echo "2️⃣  IN NEW TERMINAL - OPEN FRONTEND:"
+echo "   open frontend/index.html"
+echo "   (or drag it to browser)"
+echo ""
+echo "3️⃣  START TESTING:"
+echo "   Click tabs in the UI"
+echo "   Read explanations"
+echo "   Click buttons to test"
+echo ""
+echo "4️⃣  (Optional) UPGRADE TO HTTPS:"
+echo "   In backend terminal, Ctrl+C"
+echo "   python app-https.py"
+echo "   In Postman: Disable SSL verification"
+echo ""
+echo "5️⃣  (Optional) IMPORT POSTMAN COLLECTION:"
+echo "   Open Postman"
+echo "   Click Import"
+echo "   Select: postman/collection.json"
+echo "   Run all tests!"
+echo ""
+echo "6️⃣  (Optional) SETUP LOCAL DNS:"
+echo "   sudo nano /etc/hosts"
+echo "   Add: 127.0.0.1  myapp.local"
+echo "   Test: ping myapp.local"
+echo "   Visit: http://myapp.local:5000"
+echo ""
+echo "=========================================="
+echo ""
+echo "📚 Learning Path:"
+echo "   Step 1: HTTP Protocol"
+echo "   Step 2: Request Headers"
+echo "   Step 3: CRUD Operations"
+echo "   Step 4: HTTPS/TLS/SSL"
+echo "   Step 5: DNS"
+echo "   Step 6: CDN"
+echo "   Step 7: Postman Testing"
+echo ""
+echo "💡 Pro Tips:"
+echo "   - Check response HEADERS (important!)"
+echo "   - Use Postman for professional testing"
+echo "   - Read error messages (they help!)"
+echo "   - Experiment and break things safely"
+echo ""
+echo "📖 Documentation:"
+echo "   - Main: README.md"
+echo "   - Backend: backend/README.md"
+echo "   - Frontend: frontend/README.md"
+echo "   - Postman: postman/README.md"
+echo "   - Certificates: certificates/README.md"
+echo ""
+echo "=========================================="
+echo ""
+echo "Good luck learning! 🎉"
+echo ""

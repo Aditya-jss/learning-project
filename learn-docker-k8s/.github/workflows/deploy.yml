@@ -1,0 +1,70 @@
+name: Build and Deploy to Kubernetes
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Check out the code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Docker buildx (for building images)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Step 3: Log in to Docker Hub
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # Step 4: Build and push Docker image
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/learn-docker-k8s:latest
+            ${{ secrets.DOCKER_USERNAME }}/learn-docker-k8s:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Step 5: Set up kubectl
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.0'
+
+      # Step 6: Configure kubectl (requires kubeconfig)
+      - name: Configure kubectl
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+      # Step 7: Update K8s deployment image
+      - name: Update Kubernetes deployment
+        run: |
+          kubectl set image deployment/learn-docker-k8s \
+            api=${{ secrets.DOCKER_USERNAME }}/learn-docker-k8s:${{ github.sha }} \
+            --record
+
+      # Step 8: Verify deployment
+      - name: Verify deployment rollout
+        run: |
+          kubectl rollout status deployment/learn-docker-k8s --timeout=5m
+
+      # Step 9: Check pod status
+      - name: Check pod status
+        run: |
+          kubectl get pods -l app=learn-docker-k8s
+          kubectl get svc learn-docker-k8s

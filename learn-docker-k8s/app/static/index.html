@@ -1,0 +1,30 @@
+
+# Edit the HTML file
+cat > app/static/index.html << 'EOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Docker + Kubernetes Demo - CI/CD Active!</title>
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; margin: 40px; }
+    button { padding: 10px 16px; font-size: 16px; }
+    #msg { margin-top: 20px; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <h1>Docker + Kubernetes Demo 🚀</h1>
+  <p>This page calls the FastAPI backend running in Docker/Kubernetes.</p>
+  <p><strong>Deployed via GitHub Actions CI/CD!</strong></p>
+  <button id="btn">Fetch message</button>
+  <div id="msg"></div>
+  <script>
+    document.getElementById('btn').onclick = async () => {
+      const res = await fetch('/api/message');
+      const data = await res.json();
+      document.getElementById('msg').innerText = data.message;
+    };
+  </script>
+</body>
+</html>
